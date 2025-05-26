@@ -1,11 +1,9 @@
 package com.leclowndu93150.particle_effects;
 
-import lombok.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.loading.FMLLoader;
 import org.slf4j.*;
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.leclowndu93150.particle_effects.manager.ParticleEffectsManager;

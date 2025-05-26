@@ -61,7 +61,7 @@ public class ParticleEffectsManager {
 	}
 
 	public static void onInitialize() {
-		for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.listElements().toList()) {
+		for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
 			MobEffect statusEffect = reference.value();
 			ResourceLocation id = reference.key().location();
 			if (!id.getNamespace().equals("minecraft")) {
@@ -80,7 +80,7 @@ public class ParticleEffectsManager {
 				StatusEffectUtils.swapParticle(entry.getKey(), entry.getValue().get());
 			}
 
-			for (Reference<Potion> reference : BuiltInRegistries.POTION.listElements().toList()) {
+			for (Reference<Potion> reference : BuiltInRegistries.POTION.holders().toList()) {
 				Potion potion = reference.value();
 				ResourceLocation id = reference.key().location();
 				if (!id.getNamespace().equals("minecraft")) {
@@ -112,7 +112,7 @@ public class ParticleEffectsManager {
 				COLOR_TO_PARTICLES_MAP.put(color, particleEffects);
 			}
 
-			for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.listElements().toList()) {
+			for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
 				MobEffect statusEffect = reference.value();
 				ResourceLocation id = reference.key().location();
 				if (!id.getNamespace().equals("minecraft")) {
