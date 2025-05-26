@@ -1,22 +1,20 @@
 package com.leclowndu93150.particle_effects.manager;
 
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
+import com.leclowndu93150.particle_effects.network.NetworkHandler;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.Level;
 import com.leclowndu93150.particle_effects.ParticleEffects;
@@ -76,6 +74,7 @@ public class ParticleEffectsManager {
 
 	@SubscribeEvent
 	public static void onCommonSetup(FMLCommonSetupEvent event) {
+		event.enqueueWork(NetworkHandler::init);
 		event.enqueueWork(() -> {
 			for (Map.Entry<MobEffect, RegistryObject<SimpleParticleType>> entry : EFFECT_TO_PARTICLE.entrySet()) {
 				StatusEffectUtils.swapParticle(entry.getKey(), entry.getValue().get());
