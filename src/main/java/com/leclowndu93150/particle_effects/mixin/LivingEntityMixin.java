@@ -1,54 +1,52 @@
 package com.leclowndu93150.particle_effects.mixin;
-//? =1.20.1 {
-/*import com.llamalad7.mixinextras.injector.wrapoperation.*;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.*;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.util.math.ColorHelper.Argb;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
+
+import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
+import com.leclowndu93150.particle_effects.utils.ArgbUtils;
+import com.leclowndu93150.particle_effects.utils.ListUtils;
+import com.llamalad7.mixinextras.injector.wrapoperation.*;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.leclowndu93150.particle_effects.ParticleEffects;
-import com.leclowndu93150.particle_effects.utils.ListUtils;
 
 import java.util.*;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
 
-@Shadow public abstract Map<StatusEffect, StatusEffectInstance> getActiveStatusEffects();
+    @Shadow public abstract Map<MobEffect, MobEffectInstance> getActiveEffectsMap();
 
-	@Shadow public abstract Random getRandom();
+    @Shadow public abstract RandomSource getRandom();
 
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;addParticle(Lnet/minecraft/particle/ParticleEffect;DDDDDD)V"), method = "tickStatusEffects")
-	private void swapParticle(World instance, ParticleEffect parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Void> original) {
-		if (!ParticleEffects.getConfig().isModEnabled()) {
-			original.call(instance, parameters, x, y, z, velocityX, velocityY, velocityZ);
-			return;
-		}
+    @WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V"), method = "tickEffects")
+    private void swapParticle(Level instance, ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Void> original) {
+        if (!ParticleEffectsConfig.CLIENT.modEnabled.get()) {
+            original.call(instance, parameters, x, y, z, velocityX, velocityY, velocityZ);
+            return;
+        }
 
-		Set<StatusEffect> effects = this.getActiveStatusEffects().keySet();
-		if (effects.isEmpty()) {
-			original.call(instance, parameters, x, y, z, velocityX, velocityY, velocityZ);
-			return;
-		}
+        Set<MobEffect> effects = this.getActiveEffectsMap().keySet();
+        if (effects.isEmpty()) {
+            original.call(instance, parameters, x, y, z, velocityX, velocityY, velocityZ);
+            return;
+        }
 
-		StatusEffect statusEffect = ListUtils.getRandomElement(effects.stream().toList(), this.getRandom());
-		if (statusEffect == null) {
-			return;
-		}
+        MobEffect statusEffect = ListUtils.getRandomElement(effects.stream().toList(), this.getRandom());
+        if (statusEffect == null) {
+            return;
+        }
 
-		int color = statusEffect.getColor();
+        int color = statusEffect.getColor();
 
-		double red = Argb.getRed(color) / 255.0;
-		double green = Argb.getGreen(color) / 255.0;
-		double blue = Argb.getBlue(color) / 255.0;
+        double red = ArgbUtils.getRed(color) / 255.0;
+        double green = ArgbUtils.getGreen(color) / 255.0;
+        double blue = ArgbUtils.getBlue(color) / 255.0;
 
-		original.call(instance, parameters, x, y, z, red, green, blue);
-	}
-
-
+        original.call(instance, parameters, x, y, z, red, green, blue);
+    }
 }
-*///?}

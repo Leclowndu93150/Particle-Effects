@@ -6,6 +6,7 @@
   "refmap": "particle_effects.refmap.json",
   "mixins": [
     "AreaEffectCloudEntityMixin",
+    "LivingEntityMixin",
     "SimpleParticleTypeMixin",
     "StatusEffectMixin",
     "StatusEffectsMixin"

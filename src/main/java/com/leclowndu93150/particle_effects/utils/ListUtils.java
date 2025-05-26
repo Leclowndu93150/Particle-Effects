@@ -2,7 +2,8 @@ package com.leclowndu93150.particle_effects.utils;
 
 import java.util.List;
 import net.minecraft.util.RandomSource;
-import org.jetbrains.annotations.Nullable;
+
+import javax.annotation.Nullable;
 
 public class ListUtils {
 

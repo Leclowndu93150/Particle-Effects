@@ -2,7 +2,6 @@ package com.leclowndu93150.particle_effects.mixin;
 
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +22,8 @@ public abstract class AreaEffectCloudEntityMixin extends Entity {
 		super(type, world);
 	}
 
+	@Shadow public abstract int getColor();
+
 	// LINGERING POTION
 	@ModifyReturnValue(at = @At(value = "RETURN"), method = "getParticle")
 	private ParticleOptions swapParticleType(ParticleOptions original) {
@@ -30,10 +31,7 @@ public abstract class AreaEffectCloudEntityMixin extends Entity {
 			return original;
 		}
 
-		if (!(original instanceof ColorParticleOption effect)) {
-			return original;
-		}
-		int color = effect.color;
+		int color = this.getColor();
 
 		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
 		if (list == null || list.isEmpty()) {
@@ -45,7 +43,7 @@ public abstract class AreaEffectCloudEntityMixin extends Entity {
 			return original;
 		}
 
-		((PEType) particleEffect).particleEffects$setColor(color);
+		((PEType) particleEffect).particleEffects$setColor(-1);
 
 		return particleEffect;
 	}

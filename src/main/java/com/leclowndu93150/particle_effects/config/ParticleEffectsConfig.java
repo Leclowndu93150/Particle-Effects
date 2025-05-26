@@ -1,26 +1,26 @@
 package com.leclowndu93150.particle_effects.config;
 
 import lombok.Getter;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class ParticleEffectsConfig {
 
-	public static final ModConfigSpec CLIENT_SPEC;
+	public static final ForgeConfigSpec CLIENT_SPEC;
 	public static final ClientConfig CLIENT;
 
 	static {
-		final Pair<ClientConfig, ModConfigSpec> clientSpecPair = new ModConfigSpec.Builder().configure(ClientConfig::new);
+		final Pair<ClientConfig, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
 		CLIENT_SPEC = clientSpecPair.getRight();
 		CLIENT = clientSpecPair.getLeft();
 	}
 
 	@Getter
 	public static class ClientConfig {
-		public final ModConfigSpec.BooleanValue modEnabled;
-		public final ModConfigSpec.BooleanValue debugLogEnabled;
+		public final ForgeConfigSpec.BooleanValue modEnabled;
+		public final ForgeConfigSpec.BooleanValue debugLogEnabled;
 
-		public ClientConfig(ModConfigSpec.Builder builder) {
+		public ClientConfig(ForgeConfigSpec.Builder builder) {
 			builder.comment("Particle Effects Configuration").push("general");
 
 			modEnabled = builder

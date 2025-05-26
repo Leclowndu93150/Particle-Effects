@@ -19,24 +19,25 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
 import com.leclowndu93150.particle_effects.ParticleEffects;
 import com.leclowndu93150.particle_effects.particle.*;
 import com.leclowndu93150.particle_effects.utils.*;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
+
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.*;
-import org.jetbrains.annotations.Nullable;
 
 public class ParticleEffectsManager {
 
 	public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, ParticleEffects.MOD_ID);
 
-	private static final Map<String, DeferredHolder<ParticleType<?>, SimpleParticleType>> REGISTERED_PARTICLES = new HashMap<>();
-	private static final Map<MobEffect, DeferredHolder<ParticleType<?>, SimpleParticleType>> EFFECT_TO_PARTICLE = new HashMap<>();
+	private static final Map<String, RegistryObject<SimpleParticleType>> REGISTERED_PARTICLES = new HashMap<>();
+	private static final Map<MobEffect, RegistryObject<SimpleParticleType>> EFFECT_TO_PARTICLE = new HashMap<>();
 	private static final Map<Integer, List<ParticleOptions>> COLOR_TO_PARTICLES_MAP = new HashMap<>();
 	private static final HashMap<ParticleOptions, MobEffect> MINECRAFT_EFFECTS_WITH_TEXTURED_PARTICLE = getMinecraftEffectWidthTexturedParticles();
 
@@ -45,11 +46,11 @@ public class ParticleEffectsManager {
 		return COLOR_TO_PARTICLES_MAP.get(i);
 	}
 
-	private static DeferredHolder<ParticleType<?>, SimpleParticleType> registerParticleTypeForEffect(MobEffect statusEffect, ResourceLocation effectId) {
+	private static RegistryObject<SimpleParticleType> registerParticleTypeForEffect(MobEffect statusEffect, ResourceLocation effectId) {
 		ResourceLocation modEffectId = getModEffectId(statusEffect, effectId);
 		String registryName = modEffectId.getPath();
 
-		DeferredHolder<ParticleType<?>, SimpleParticleType> holder = PARTICLES.register(registryName, () -> new SimpleParticleType(false));
+		RegistryObject<SimpleParticleType> holder = PARTICLES.register(registryName, () -> new SimpleParticleType(false));
 		REGISTERED_PARTICLES.put(registryName, holder);
 
 		return holder;
@@ -68,7 +69,7 @@ public class ParticleEffectsManager {
 				continue;
 			}
 
-			DeferredHolder<ParticleType<?>, SimpleParticleType> holder = ParticleEffectsManager.registerParticleTypeForEffect(statusEffect, id);
+			RegistryObject<SimpleParticleType> holder = ParticleEffectsManager.registerParticleTypeForEffect(statusEffect, id);
 			EFFECT_TO_PARTICLE.put(statusEffect, holder);
 		}
 	}
@@ -76,7 +77,7 @@ public class ParticleEffectsManager {
 	@SubscribeEvent
 	public static void onCommonSetup(FMLCommonSetupEvent event) {
 		event.enqueueWork(() -> {
-			for (Map.Entry<MobEffect, DeferredHolder<ParticleType<?>, SimpleParticleType>> entry : EFFECT_TO_PARTICLE.entrySet()) {
+			for (Map.Entry<MobEffect, RegistryObject<SimpleParticleType>> entry : EFFECT_TO_PARTICLE.entrySet()) {
 				StatusEffectUtils.swapParticle(entry.getKey(), entry.getValue().get());
 			}
 
@@ -89,16 +90,10 @@ public class ParticleEffectsManager {
 
 				List<MobEffectInstance> effects = potion.getEffects();
 
-				OptionalInt optional = net.minecraft.world.item.alchemy.PotionContents.getColorOptional(effects);
-				if (optional.isEmpty()) {
-					continue;
-				}
-
-				int color = ArgbUtils.getColorWithoutAlpha(optional.getAsInt());
+				int color = ArgbUtils.getColorWithoutAlpha(StatusEffectUtils.getColor(effects));
 
 				List<ParticleOptions> particleEffects = effects.stream()
 						.map(MobEffectInstance::getEffect)
-						.map(Holder::value)
 						.flatMap((effect) -> {
 							ParticleOptions particleEffect = ((PEStatusEffect) effect).particleEffects$getParticleEffect();
 							if (particleEffect == null) {
@@ -142,7 +137,7 @@ public class ParticleEffectsManager {
 
 	@SubscribeEvent
 	public static void onRegisterParticleProviders(RegisterParticleProvidersEvent event) {
-		for (DeferredHolder<ParticleType<?>, SimpleParticleType> holder : REGISTERED_PARTICLES.values()) {
+		for (RegistryObject<SimpleParticleType> holder : REGISTERED_PARTICLES.values()) {
 			event.registerSpriteSet(holder.get(), TexturedParticleFactory::new);
 		}
 	}
@@ -150,14 +145,7 @@ public class ParticleEffectsManager {
 	private static HashMap<ParticleOptions, MobEffect> getMinecraftEffectWidthTexturedParticles() {
 		HashMap<ParticleOptions, MobEffect> map = new HashMap<>();
 
-		map.put(ParticleTypes.ITEM_SLIME, MobEffects.OOZING.value());
-		map.put(ParticleTypes.ITEM_COBWEB, MobEffects.WEAVING.value());
-		map.put(ParticleTypes.INFESTED, MobEffects.INFESTED.value());
-		map.put(ParticleTypes.TRIAL_OMEN, MobEffects.TRIAL_OMEN.value());
-		map.put(ParticleTypes.RAID_OMEN, MobEffects.RAID_OMEN.value());
-		map.put(ParticleTypes.SMALL_GUST, MobEffects.WIND_CHARGED.value());
-
-		return map;
+		return new HashMap<>();
 	}
 
 	public static MobEffect getVanillaStatusEffectByStatusEffect(ParticleOptions parameters) {
@@ -192,7 +180,7 @@ public class ParticleEffectsManager {
 		if (particleEffect == null) {
 			return original.call(instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
 		}
-		((PEType) particleEffect).particleEffects$setColor(color);
+		((PEType) particleEffect).particleEffects$setColor(-1);
 		return original.call(instance, particleEffect, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
 	}
 }

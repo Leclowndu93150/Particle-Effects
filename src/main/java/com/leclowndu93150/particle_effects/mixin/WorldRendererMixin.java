@@ -10,18 +10,18 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 
 import com.leclowndu93150.particle_effects.manager.ParticleEffectsManager;
 import com.leclowndu93150.particle_effects.utils.*;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import javax.annotation.Nullable;
 
 @Debug(export = true)
 @Mixin(LevelRenderer.class)
@@ -43,24 +43,18 @@ public class WorldRendererMixin {
 		return ParticleEffectsManager.processSplashPotionStageTwo(this.world, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
 	}
 
-	// ENTITY PARTICLES
 	@WrapOperation(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;"))
 	private Particle swapParticle(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, boolean canSpawnOnMinimal, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original) {
 		if (!ParticleEffectsConfig.CLIENT.modEnabled.get()) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
-		int color;
-
-		if (parameters instanceof ColorParticleOption effect) { // RECEIVES IN SINGLEPLAYER AND IN MULTIPLAYER
-			color = effect.color;
-		} else {
-			MobEffect statusEffect = ParticleEffectsManager.getVanillaStatusEffectByStatusEffect(parameters);
-			color = statusEffect == null ? 0 : ArgbUtils.getColorWithoutAlpha(statusEffect.getColor());
-		}
-
-		if (color == 0) {
+		boolean bl = parameters.equals(ParticleTypes.ENTITY_EFFECT);
+		boolean bl2 = parameters.equals(ParticleTypes.AMBIENT_ENTITY_EFFECT);
+		if (!bl && !bl2) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
+
+		int color = ArgbUtils.getArgb(bl2 ? 38 : 255, (int) (velocityX * 255), (int) (velocityY * 255), (int) (velocityZ * 255));
 
 		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
 		if (list == null || this.world == null) {
@@ -75,4 +69,5 @@ public class WorldRendererMixin {
 		((PEType) particleEffect).particleEffects$setColor(color);
 		return original.call(instance, particleEffect, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 	}
+
 }
