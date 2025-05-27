@@ -1,6 +1,7 @@
 package com.leclowndu93150.particle_effects.mixin;
 
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
+import com.leclowndu93150.particle_effects.manager.ClientHandler;
 import com.llamalad7.mixinextras.injector.wrapoperation.*;
 
 import com.llamalad7.mixinextras.sugar.Local;
@@ -27,20 +28,20 @@ import javax.annotation.Nullable;
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
 
-	@Shadow(aliases = "level")
+	@Shadow(aliases = "level", remap = false)
 	@Nullable
 	private ClientLevel world;
 
 	// SPLASH POTION
 	@Inject(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;atBottomCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
 	private void modifyParticleEffect(int eventId, BlockPos pos, int data, CallbackInfo ci, @Share("tp_effects") LocalRef<List<ParticleOptions>> localParticleEffects) {
-		ParticleEffectsManager.processSplashPotionStageOne(localParticleEffects, data);
+		ClientHandler.processSplashPotionStageOne(localParticleEffects, data);
 	}
 
 	// SPLASH POTION
 	@WrapOperation(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)Lnet/minecraft/client/particle/Particle;", ordinal = 0))
 	private Particle swapParticles(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original, @Share("tp_effects") LocalRef<List<ParticleOptions>> localParticleEffects, @Local(argsOnly = true, ordinal = 1) int color) {
-		return ParticleEffectsManager.processSplashPotionStageTwo(this.world, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
+		return ClientHandler.processSplashPotionStageTwo(this.world, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
 	}
 
 	@WrapOperation(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;"))

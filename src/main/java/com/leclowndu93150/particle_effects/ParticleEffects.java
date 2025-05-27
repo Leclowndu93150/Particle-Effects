@@ -1,10 +1,12 @@
 package com.leclowndu93150.particle_effects;
 
+import com.leclowndu93150.particle_effects.manager.ClientSetup;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.slf4j.*;
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.leclowndu93150.particle_effects.manager.ParticleEffectsManager;
@@ -30,8 +32,11 @@ public class ParticleEffects{
 		IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		ParticleEffectsManager.PARTICLES.register(eventBus);
 		eventBus.addListener(ParticleEffectsManager::onCommonSetup);
-		eventBus.addListener(ParticleEffectsManager::onRegisterParticleProviders);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ParticleEffectsConfig.CLIENT_SPEC);
+
+		if (FMLEnvironment.dist.isClient()) {
+			ClientSetup.init(eventBus);
+		}
+
 		ParticleEffectsManager.onInitialize();
 	}
 }
