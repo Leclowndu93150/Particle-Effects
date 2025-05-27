@@ -28,9 +28,9 @@ import javax.annotation.Nullable;
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
 
-	@Shadow(aliases = "level", remap = false)
+	@Shadow
 	@Nullable
-	private ClientLevel world;
+	private ClientLevel level;
 
 	// SPLASH POTION
 	@Inject(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;atBottomCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
@@ -41,7 +41,7 @@ public class WorldRendererMixin {
 	// SPLASH POTION
 	@WrapOperation(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)Lnet/minecraft/client/particle/Particle;", ordinal = 0))
 	private Particle swapParticles(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original, @Share("tp_effects") LocalRef<List<ParticleOptions>> localParticleEffects, @Local(argsOnly = true, ordinal = 1) int color) {
-		return ClientHandler.processSplashPotionStageTwo(this.world, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
+		return ClientHandler.processSplashPotionStageTwo(this.level, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
 	}
 
 	@WrapOperation(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;"))
@@ -58,11 +58,11 @@ public class WorldRendererMixin {
 		int color = ArgbUtils.getArgb(bl2 ? 38 : 255, (int) (velocityX * 255), (int) (velocityY * 255), (int) (velocityZ * 255));
 
 		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
-		if (list == null || this.world == null) {
+		if (list == null || this.level == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
 
-		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.world.getRandom());
+		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.level.getRandom());
 		if (particleEffect == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
