@@ -27,9 +27,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
 
-	@Shadow(aliases = "level")
+	@Shadow
 	@Nullable
-	private ClientLevel world;
+	private ClientLevel level;
 
 	// SPLASH POTION
 	@Inject(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;atBottomCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
@@ -40,7 +40,7 @@ public class WorldRendererMixin {
 	// SPLASH POTION
 	@WrapOperation(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)Lnet/minecraft/client/particle/Particle;", ordinal = 0))
 	private Particle swapParticles(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original, @Share("tp_effects") LocalRef<List<ParticleOptions>> localParticleEffects, @Local(argsOnly = true, ordinal = 1) int color) {
-		return ParticleEffectsManager.processSplashPotionStageTwo(this.world, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
+		return ParticleEffectsManager.processSplashPotionStageTwo(this.level, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
 	}
 
 	// ENTITY PARTICLES
@@ -63,11 +63,11 @@ public class WorldRendererMixin {
 		}
 
 		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
-		if (list == null || this.world == null) {
+		if (list == null || this.level == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
 
-		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.world.getRandom());
+		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.level.getRandom());
 		if (particleEffect == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
