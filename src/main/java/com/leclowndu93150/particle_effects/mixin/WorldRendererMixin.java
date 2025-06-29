@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
 
-	@Shadow(aliases = "level")
+	@Shadow
 	@Nullable
-	private ClientLevel world;
+	private ClientLevel level;
 
 	// ENTITY PARTICLES
 	@WrapOperation(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;"))
@@ -45,11 +45,11 @@ public class WorldRendererMixin {
 		}
 
 		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
-		if (list == null || this.world == null) {
+		if (list == null || this.level == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
 
-		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.world.getRandom());
+		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.level.getRandom());
 		if (particleEffect == null) {
 			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
 		}
