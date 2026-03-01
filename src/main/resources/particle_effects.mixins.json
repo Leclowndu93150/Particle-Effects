@@ -2,16 +2,18 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.leclowndu93150.particle_effects.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "particle_effects.refmap.json",
-  "mixins": [
+  "mixins": [],
+  "client": [
     "AreaEffectCloudEntityMixin",
     "SimpleParticleTypeMixin",
     "StatusEffectMixin",
-    "StatusEffectsMixin"
-  ],
-  "client": [
-    "WorldRendererMixin"
+    "StatusEffectsMixin",
+    "WorldRendererMixin",
+    "SecondLivingEntityMixin",
+    "ArrowEntityMixin",
+    "OldPotionsMobEffectMixin"
   ],
   "injectors": {
     "defaultRequire": 1

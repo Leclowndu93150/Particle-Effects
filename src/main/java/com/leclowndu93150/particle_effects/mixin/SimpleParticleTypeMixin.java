@@ -9,15 +9,15 @@ import net.minecraft.core.particles.SimpleParticleType;
 public class SimpleParticleTypeMixin implements PEType {
 
 	@Unique
-	private int color;
+	private int particleEffects$color;
 
 	@Override
 	public int particleEffects$getColor() {
-		return this.color;
+		return this.particleEffects$color;
 	}
 
 	@Override
 	public void particleEffects$setColor(int color) {
-		this.color = color;
+		this.particleEffects$color = color;
 	}
 }

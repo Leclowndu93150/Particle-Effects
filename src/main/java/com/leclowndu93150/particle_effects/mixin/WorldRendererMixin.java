@@ -1,6 +1,5 @@
 package com.leclowndu93150.particle_effects.mixin;
 
-import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.llamalad7.mixinextras.injector.wrapoperation.*;
 
 import com.llamalad7.mixinextras.sugar.Local;
@@ -10,16 +9,14 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 
 import com.leclowndu93150.particle_effects.manager.ParticleEffectsManager;
-import com.leclowndu93150.particle_effects.utils.*;
 import java.util.List;
+import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -40,39 +37,23 @@ public class WorldRendererMixin {
 	// SPLASH POTION
 	@WrapOperation(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)Lnet/minecraft/client/particle/Particle;", ordinal = 0))
 	private Particle swapParticles(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original, @Share("tp_effects") LocalRef<List<ParticleOptions>> localParticleEffects, @Local(argsOnly = true, ordinal = 1) int color) {
-		return ParticleEffectsManager.processSplashPotionStageTwo(this.level, instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ, original, localParticleEffects, color);
+		return ParticleEffectsManager.processSplashPotionStageTwo(
+				this.level,
+				parameters,
+				(particleEffect) -> original.call(instance, particleEffect, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ),
+				localParticleEffects,
+				color);
 	}
 
 	// ENTITY PARTICLES
 	@WrapOperation(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;"))
 	private Particle swapParticle(LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, boolean canSpawnOnMinimal, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original) {
-		if (!ParticleEffectsConfig.CLIENT.modEnabled.get()) {
-			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
-		}
-		int color;
-
-		if (parameters instanceof ColorParticleOption effect) { // RECEIVES IN SINGLEPLAYER AND IN MULTIPLAYER
-			color = effect.color;
-		} else {
-			MobEffect statusEffect = ParticleEffectsManager.getVanillaStatusEffectByStatusEffect(parameters);
-			color = statusEffect == null ? 0 : ArgbUtils.getColorWithoutAlpha(statusEffect.getColor());
-		}
-
-		if (color == 0) {
-			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
-		}
-
-		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
-		if (list == null || this.level == null) {
-			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
-		}
-
-		ParticleOptions particleEffect = ListUtils.getRandomElement(list, this.level.getRandom());
-		if (particleEffect == null) {
-			return original.call(instance, parameters, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
-		}
-
-		((PEType) particleEffect).particleEffects$setColor(color);
-		return original.call(instance, particleEffect, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
+		Function<ParticleOptions, Particle> function = (effect) -> original.call(instance, effect, alwaysSpawn, canSpawnOnMinimal, x, y, z, velocityX, velocityY, velocityZ);
+		return ParticleEffectsManager.swapParticle(
+				this.level,
+				parameters,
+				function,
+				() -> function.apply(parameters)
+		);
 	}
 }

@@ -1,12 +1,13 @@
 package com.leclowndu93150.particle_effects.manager;
 
+import com.leclowndu93150.particle_effects.capture.ParticleCaptures;
+import com.leclowndu93150.particle_effects.compat.LoadedMods;
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.particle.Particle;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Holder.Reference;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
@@ -28,10 +29,14 @@ import com.leclowndu93150.particle_effects.ParticleEffects;
 import com.leclowndu93150.particle_effects.particle.*;
 import com.leclowndu93150.particle_effects.utils.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 import org.jetbrains.annotations.Nullable;
 
 public class ParticleEffectsManager {
+
+	public static boolean redirectEnabled = false;
+	public static boolean redirectToVanillaEffectColors = true;
 
 	public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, ParticleEffects.MOD_ID);
 
@@ -80,64 +85,84 @@ public class ParticleEffectsManager {
 				StatusEffectUtils.swapParticle(entry.getKey(), entry.getValue().get());
 			}
 
-			for (Reference<Potion> reference : BuiltInRegistries.POTION.holders().toList()) {
-				Potion potion = reference.value();
-				ResourceLocation id = reference.key().location();
-				if (!id.getNamespace().equals("minecraft")) {
-					continue;
-				}
-
-				List<MobEffectInstance> effects = potion.getEffects();
-
-				OptionalInt optional = net.minecraft.world.item.alchemy.PotionContents.getColorOptional(effects);
-				if (optional.isEmpty()) {
-					continue;
-				}
-
-				int color = ArgbUtils.getColorWithoutAlpha(optional.getAsInt());
-
-				List<ParticleOptions> particleEffects = effects.stream()
-						.map(MobEffectInstance::getEffect)
-						.map(Holder::value)
-						.flatMap((effect) -> {
-							ParticleOptions particleEffect = ((PEStatusEffect) effect).particleEffects$getParticleEffect();
-							if (particleEffect == null) {
-								ParticleEffects.LOGGER.error("[DEV/Potion Registration] Looks like {} effect with color {} doesn't have textured particle, this shouldn't happen! Skipping it registration.", color, effect.getDisplayName().getString());
-								return Stream.empty();
-							}
-							return Stream.of(particleEffect);
-						})
-						.toList();
-
-				COLOR_TO_PARTICLES_MAP.put(color, particleEffects);
-			}
-
-			for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
-				MobEffect statusEffect = reference.value();
-				ResourceLocation id = reference.key().location();
-				if (!id.getNamespace().equals("minecraft")) {
-					continue;
-				}
-
-				int color = ArgbUtils.getColorWithoutAlpha(statusEffect.getColor());
-
-				ParticleOptions particleEffect = ((PEStatusEffect) statusEffect).particleEffects$getParticleEffect();
-
-				if (particleEffect == null) {
-					ParticleEffects.LOGGER.error("[DEV/Effect Registration] Looks like {} effect with color {} doesn't have textured particle, this shouldn't happen! Skipping it registration.", color, statusEffect.getDisplayName().getString());
-					continue;
-				}
-
-				List<ParticleOptions> effects = COLOR_TO_PARTICLES_MAP.get(color);
-				if (effects != null) {
-					if (ParticleEffectsConfig.CLIENT.debugLogEnabled.get()) {
-						ParticleEffects.LOGGER.warn("[DEV/Effect Registration] Found registered effects for color {} from {} effect, skipping it registration. If you just mod user, ignore it.", color, statusEffect.getDisplayName().getString());
-					}
-				} else {
-					COLOR_TO_PARTICLES_MAP.put(color, List.of(particleEffect));
-				}
+			if (LoadedMods.isAnyOldPotionsModLoaded()) {
+				ParticleEffectsManager.redirectEnabled = true;
+				ParticleEffectsManager.redirectToVanillaEffectColors = true;
+				ParticleEffectsManager.registerParticleColorsForTypes();
+				ParticleEffectsManager.redirectToVanillaEffectColors = false;
+				ParticleEffectsManager.registerParticleColorsForTypes();
+				ParticleEffectsManager.redirectEnabled = false;
+			} else {
+				registerParticleColorsForTypes();
 			}
 		});
+	}
+
+	private static void registerParticleColorsForTypes() {
+		for (Reference<Potion> reference : BuiltInRegistries.POTION.holders().toList()) {
+			Potion potion = reference.value();
+			ResourceLocation id = reference.key().location();
+			if (!id.getNamespace().equals("minecraft")) {
+				continue;
+			}
+
+			List<MobEffectInstance> effects = potion.getEffects();
+
+			OptionalInt optional = net.minecraft.world.item.alchemy.PotionContents.getColorOptional(effects);
+			if (optional.isEmpty()) {
+				continue;
+			}
+
+			int color = ArgbUtils.getColorWithoutAlpha(optional.getAsInt());
+
+			List<ParticleOptions> particleEffects = effects.stream()
+					.map(MobEffectInstance::getEffect)
+					.map(Holder::value)
+					.flatMap((effect) -> {
+						ParticleOptions particleEffect = ((PEStatusEffect) effect).particleEffects$getParticleEffect();
+						if (particleEffect == null) {
+							ParticleEffects.LOGGER.error("[DEV/Potion Registration] Looks like {} effect with color {} doesn't have textured particle, this shouldn't happen! Skipping it registration.", color, effect.getDisplayName().getString());
+							return Stream.empty();
+						}
+						return Stream.of(particleEffect);
+					})
+					.toList();
+
+			List<ParticleOptions> list = COLOR_TO_PARTICLES_MAP.get(color);
+			if (list != null) {
+				if (ParticleEffectsConfig.CLIENT.debugLogEnabled.get()) {
+					ParticleEffects.LOGGER.warn("[DEV/Potion Registration] Found registered effects for color {} from {} potion, skipping its registration. If you just mod user, ignore it.", color, potion.name);
+				}
+			} else {
+				COLOR_TO_PARTICLES_MAP.put(color, particleEffects);
+			}
+		}
+
+		for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
+			MobEffect statusEffect = reference.value();
+			ResourceLocation id = reference.key().location();
+			if (!id.getNamespace().equals("minecraft")) {
+				continue;
+			}
+
+			int color = ArgbUtils.getColorWithoutAlpha(statusEffect.getColor());
+
+			ParticleOptions particleEffect = ((PEStatusEffect) statusEffect).particleEffects$getParticleEffect();
+
+			if (particleEffect == null) {
+				ParticleEffects.LOGGER.error("[DEV/Effect Registration] Looks like {} effect with color {} doesn't have textured particle, this shouldn't happen! Skipping it registration.", color, statusEffect.getDisplayName().getString());
+				continue;
+			}
+
+			List<ParticleOptions> effects = COLOR_TO_PARTICLES_MAP.get(color);
+			if (effects != null) {
+				if (ParticleEffectsConfig.CLIENT.debugLogEnabled.get()) {
+					ParticleEffects.LOGGER.warn("[DEV/Effect Registration] Found registered effects for color {} from {} effect, skipping it registration. If you just mod user, ignore it.", color, statusEffect.getDisplayName().getString());
+				}
+			} else {
+				COLOR_TO_PARTICLES_MAP.put(color, List.of(particleEffect));
+			}
+		}
 	}
 
 	@SubscribeEvent
@@ -179,20 +204,68 @@ public class ParticleEffectsManager {
 		localParticleEffects.set(list);
 	}
 
-	public static Particle processSplashPotionStageTwo(@Nullable Level world, LevelRenderer instance, ParticleOptions parameters, boolean alwaysSpawn, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original, LocalRef<List<ParticleOptions>> localParticleEffects, int color) {
+	public static Particle processSplashPotionStageTwo(@Nullable Level world, ParticleOptions original, Function<ParticleOptions, Particle> function, LocalRef<List<ParticleOptions>> localParticleEffects, int color) {
+		Supplier<Particle> particleSupplier = () -> function.apply(original);
+
 		if (!ParticleEffectsConfig.CLIENT.modEnabled.get()) {
-			return original.call(instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
+			return particleSupplier.get();
 		}
 
 		List<ParticleOptions> list = localParticleEffects.get();
-		if (list == null || world == null) {
-			return original.call(instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
+		if (list == null || list.isEmpty() || world == null) {
+			return particleSupplier.get();
 		}
+
 		ParticleOptions particleEffect = ListUtils.getRandomElement(list, world.getRandom());
 		if (particleEffect == null) {
-			return original.call(instance, parameters, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
+			return particleSupplier.get();
 		}
+
 		((PEType) particleEffect).particleEffects$setColor(color);
-		return original.call(instance, particleEffect, alwaysSpawn, x, y, z, velocityX, velocityY, velocityZ);
+
+		ParticleCaptures.setParticle(particleEffect);
+		Particle apply = function.apply(particleEffect);
+		ParticleCaptures.setParticle(null);
+		return apply;
+	}
+
+	public static Particle swapParticle(Level world, ParticleOptions original, Function<ParticleOptions, Particle> function, Supplier<Particle> originalCall) {
+		if (!ParticleEffectsConfig.CLIENT.modEnabled.get()) {
+			return originalCall.get();
+		}
+
+		if (ParticleCaptures.getParticle() != original) {
+			return originalCall.get();
+		}
+
+		int color;
+
+		if (original instanceof ColorParticleOption effect) { // RECEIVES IN SINGLEPLAYER AND IN MULTIPLAYER
+			color = effect.color;
+		} else {
+			MobEffect statusEffect = ParticleEffectsManager.getVanillaStatusEffectByStatusEffect(original);
+			color = statusEffect == null ? 0 : ArgbUtils.getColorWithoutAlpha(statusEffect.getColor());
+		}
+
+		if (color == 0) {
+			return originalCall.get();
+		}
+
+		List<ParticleOptions> list = ParticleEffectsManager.getParticleEffects(ArgbUtils.getColorWithoutAlpha(color));
+		if (list == null || list.isEmpty()) {
+			return originalCall.get();
+		}
+		if (world == null) {
+			return originalCall.get();
+		}
+
+		ParticleOptions particleEffect = ListUtils.getRandomElement(list, world.getRandom());
+		if (particleEffect == null) {
+			return originalCall.get();
+		}
+
+		((PEType) particleEffect).particleEffects$setColor(color);
+
+		return function.apply(particleEffect);
 	}
 }

@@ -18,6 +18,7 @@ public class TexturedParticleFactory implements ParticleProvider<SimpleParticleT
 		TexturedParticle texturedParticle = new TexturedParticle(clientWorld, d, e, f, g, h, i, this.spriteProvider);
 		int color = ((PEType) effect).particleEffects$getColor();
 		texturedParticle.setAlpha((float) ArgbUtils.getAlpha(color) / 255F);
+		texturedParticle.setHolderColor(color);
 		return texturedParticle;
 	}
 }

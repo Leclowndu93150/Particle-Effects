@@ -5,9 +5,19 @@ import net.minecraft.client.particle.*;
 
 public class TexturedParticle extends SpellParticle {
 
+	private int holderColor;
+
 	protected TexturedParticle(ClientLevel clientWorld, double d, double e, double f, double g, double h, double i, SpriteSet spriteProvider) {
 		super(clientWorld, d, e, f, g, h, i, spriteProvider);
 		super.pickSprite(spriteProvider);
+	}
+
+	public int getHolderColor() {
+		return this.holderColor;
+	}
+
+	public void setHolderColor(int holderColor) {
+		this.holderColor = holderColor;
 	}
 
 	@Override
@@ -23,5 +33,10 @@ public class TexturedParticle extends SpellParticle {
 	@Override
 	public void setAlpha(float alpha) {
 		super.setAlpha(alpha);
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
 	}
 }

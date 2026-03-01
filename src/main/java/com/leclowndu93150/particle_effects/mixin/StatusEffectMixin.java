@@ -10,14 +10,14 @@ import com.leclowndu93150.particle_effects.utils.PEStatusEffect;
 public class StatusEffectMixin implements PEStatusEffect {
 
 	@Unique
-	private ParticleOptions particleEffect;
+	private ParticleOptions particleEffects$particleEffect;
 
 	@Override
 	public void particleEffects$setParticleEffect(ParticleOptions particleEffect) {
-		this.particleEffect = particleEffect;
+		this.particleEffects$particleEffect = particleEffect;
 	}
 
 	public ParticleOptions particleEffects$getParticleEffect() {
-		return this.particleEffect;
+		return this.particleEffects$particleEffect;
 	}
 }
