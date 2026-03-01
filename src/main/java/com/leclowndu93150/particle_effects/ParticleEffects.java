@@ -8,7 +8,7 @@ import org.slf4j.*;
 import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.leclowndu93150.particle_effects.manager.ParticleEffectsManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 @Mod(ParticleEffects.MOD_ID)
 public class ParticleEffects{
@@ -17,8 +17,8 @@ public class ParticleEffects{
 	public static final String MOD_ID = "particle_effects";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
-	public static ResourceLocation id(String path) {
-		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+	public static Identifier id(String path) {
+		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
 
 	public static Component text(String path, Object... args) {

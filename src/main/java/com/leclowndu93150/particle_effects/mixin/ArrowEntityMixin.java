@@ -8,7 +8,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import java.util.List;
 import net.minecraft.world.entity.*;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;

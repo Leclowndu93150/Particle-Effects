@@ -6,7 +6,6 @@ import com.leclowndu93150.particle_effects.config.ParticleEffectsConfig;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -14,7 +13,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -50,8 +50,8 @@ public class ParticleEffectsManager {
 		return COLOR_TO_PARTICLES_MAP.get(i);
 	}
 
-	private static DeferredHolder<ParticleType<?>, SimpleParticleType> registerParticleTypeForEffect(MobEffect statusEffect, ResourceLocation effectId) {
-		ResourceLocation modEffectId = getModEffectId(statusEffect, effectId);
+	private static DeferredHolder<ParticleType<?>, SimpleParticleType> registerParticleTypeForEffect(MobEffect statusEffect, Identifier effectId) {
+		Identifier modEffectId = getModEffectId(statusEffect, effectId);
 		String registryName = modEffectId.getPath();
 
 		DeferredHolder<ParticleType<?>, SimpleParticleType> holder = PARTICLES.register(registryName, () -> new SimpleParticleType(false));
@@ -60,15 +60,15 @@ public class ParticleEffectsManager {
 		return holder;
 	}
 
-	private static ResourceLocation getModEffectId(MobEffect statusEffect, ResourceLocation effectId) {
+	private static Identifier getModEffectId(MobEffect statusEffect, Identifier effectId) {
 		boolean bl = MINECRAFT_EFFECTS_WITH_TEXTURED_PARTICLE.containsValue(statusEffect);
 		return ParticleEffects.id(effectId.getPath() + (bl ? "_new" : ""));
 	}
 
 	public static void onInitialize() {
-		for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
-			MobEffect statusEffect = reference.value();
-			ResourceLocation id = reference.key().location();
+		for (Map.Entry<ResourceKey<MobEffect>, MobEffect> entry : BuiltInRegistries.MOB_EFFECT.entrySet()) {
+			MobEffect statusEffect = entry.getValue();
+			Identifier id = entry.getKey().identifier();
 			if (!id.getNamespace().equals("minecraft")) {
 				continue;
 			}
@@ -99,9 +99,9 @@ public class ParticleEffectsManager {
 	}
 
 	private static void registerParticleColorsForTypes() {
-		for (Reference<Potion> reference : BuiltInRegistries.POTION.holders().toList()) {
-			Potion potion = reference.value();
-			ResourceLocation id = reference.key().location();
+		for (Map.Entry<ResourceKey<Potion>, Potion> entry : BuiltInRegistries.POTION.entrySet()) {
+			Potion potion = entry.getValue();
+			Identifier id = entry.getKey().identifier();
 			if (!id.getNamespace().equals("minecraft")) {
 				continue;
 			}
@@ -131,16 +131,17 @@ public class ParticleEffectsManager {
 			List<ParticleOptions> list = COLOR_TO_PARTICLES_MAP.get(color);
 			if (list != null) {
 				if (ParticleEffectsConfig.CLIENT.debugLogEnabled.get()) {
-					ParticleEffects.LOGGER.warn("[DEV/Potion Registration] Found registered effects for color {} from {} potion, skipping its registration. If you just mod user, ignore it.", color, potion.name);
+					String potionName = potion.name();
+					ParticleEffects.LOGGER.warn("[DEV/Potion Registration] Found registered effects for color {} from {} potion, skipping its registration. If you just mod user, ignore it.", color, potionName);
 				}
 			} else {
 				COLOR_TO_PARTICLES_MAP.put(color, particleEffects);
 			}
 		}
 
-		for (Reference<MobEffect> reference : BuiltInRegistries.MOB_EFFECT.holders().toList()) {
-			MobEffect statusEffect = reference.value();
-			ResourceLocation id = reference.key().location();
+		for (Map.Entry<ResourceKey<MobEffect>, MobEffect> entry : BuiltInRegistries.MOB_EFFECT.entrySet()) {
+			MobEffect statusEffect = entry.getValue();
+			Identifier id = entry.getKey().identifier();
 			if (!id.getNamespace().equals("minecraft")) {
 				continue;
 			}
@@ -240,7 +241,7 @@ public class ParticleEffectsManager {
 
 		int color;
 
-		if (original instanceof ColorParticleOption effect) { // RECEIVES IN SINGLEPLAYER AND IN MULTIPLAYER
+		if (original instanceof ColorParticleOption effect) {
 			color = effect.color;
 		} else {
 			MobEffect statusEffect = ParticleEffectsManager.getVanillaStatusEffectByStatusEffect(original);
