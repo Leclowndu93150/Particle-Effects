@@ -1,0 +1,15 @@
+{
+	"modmenu.descriptionTranslation.particle_effects": "Визуальный Fabric мод, который добавляет уникальные текстурированные частицы для всех эффектов в ванильном Minecraft!",
+	"particle_effects.modmenu.title": "§lКонфигурация ${mod_name}",
+	"particle_effects.modmenu.no_config_library_screen.message": "Вам необходимо установить §6§lYet Another Config Lib [YACL]§f, чтобы открыть экран конфигурации ${mod_name} \n\n§a§lОткрыть страницу §6§lYACL §a§lна Modrinth?",
+
+	"particle_effects.modmenu.category.general.name": "§lОсновное",
+
+	"particle_effects.modmenu.option.mod_enabled.name": "Включить мод",
+	"particle_effects.modmenu.option.mod_enabled.description": "Если мод включён, то каждая частица каждого эффекта получит свою уникальную текстуру; если отключён, все частицы всех эффектов будут иметь стандартную текстуру.",
+	"particle_effects.modmenu.option.debug_log_enabled.name": "§6Включить дополнительный журнал откладки мода",
+	"particle_effects.modmenu.option.debug_log_enabled.description": "Если включено, в консоль игры будет выведена допольнительная информация о моде; если отключено, не будет.",
+
+	"particle_effects.modmenu.formatter.enabled_or_disabled.true": "Включено",
+	"particle_effects.modmenu.formatter.enabled_or_disabled.false": "Отключено"
+}
